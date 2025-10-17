@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Capoeira - Controle de Presença</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #d4a574;
+            --secondary-color: #8b4513;
+            --accent-color: #ff6b35;
+            --dark-color: #2c1810;
+            --light-color: #f8f5f0;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--light-color) 0%, #e8dcc6 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--dark-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: var(--primary-color) !important;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--dark-color) 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(212, 165, 116, 0.25);
+        }
+        
+        .nav-pills .nav-link {
+            border-radius: 25px;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+        }
+        
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .table thead th {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--dark-color) 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(212, 165, 116, 0.1);
+        }
+        
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        
+        .loading {
+            display: none;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stats-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        @media (max-width: 768px) {
+            .container-fluid {
+                padding: 10px;
+            }
+            
+            .card {
+                margin-bottom: 15px;
+            }
+            
+            .table-responsive {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-hand-rock me-2"></i>
+                Sistema de Capoeira - Eu Sou Ninja
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showDashboard()">
+                            <i class="fas fa-chart-bar me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="logout()">
+                            <i class="fas fa-sign-out-alt me-1"></i>Sair
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <!-- Login Section -->
+        <div id="loginSection" class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card fade-in">
+                    <div class="card-header text-center">
+                        <h4><i class="fas fa-hand-rock me-2"></i>Login - Sistema de Capoeira</h4>
+                        <p class="mb-0 text-muted">Projeto Eu Sou Ninja - Arena Jacaraípe</p>
+                    </div>
+                    <div class="card-body">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Usuário</label>
+                                <input type="text" class="form-control" id="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Senha</label>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-sign-in-alt me-2"></i>Entrar
+                            </button>
+                        </form>
+                        <div id="loginAlert" class="alert alert-danger mt-3" style="display: none;"></div>
+                        <div class="mt-3 text-center">
+                            <small class="text-muted">
+                                Usuário padrão: <strong>admin</strong> | Senha: <strong>admin123</strong>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Application -->
+        <div id="mainApp" style="display: none;">
+            <!-- Dashboard Stats -->
+            <div id="dashboardSection">
+                <div class="row mb-4">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stats-card">
+                            <div class="stats-number" id="totalStudents">0</div>
+                            <div class="stats-label">Total de Alunos</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stats-card">
+                            <div class="stats-number" id="totalClasses">0</div>
+                            <div class="stats-label">Total de Turmas</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stats-card">
+                            <div class="stats-number" id="todayAttendance">0</div>
+                            <div class="stats-label">Presenças Hoje</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stats-card">
+                            <div class="stats-number" id="activeUsers">0</div>
+                            <div class="stats-label">Usuários Ativos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <ul class="nav nav-pills justify-content-center mb-4" id="mainTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#" onclick="showSection('students')">
+                        <i class="fas fa-users me-2"></i>Alunos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showSection('classes')">
+                        <i class="fas fa-chalkboard-teacher me-2"></i>Turmas
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showSection('attendance')">
+                        <i class="fas fa-clipboard-check me-2"></i>Presença
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showSection('reports')">
+                        <i class="fas fa-chart-line me-2"></i>Relatórios
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" onclick="showSection('about')">
+                        <i class="fas fa-info-circle me-2"></i>Sobre
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Students Section -->
+            <div id="studentsSection" class="section-content">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-users me-2"></i>Gerenciar Alunos</h5>
+                        <button class="btn btn-primary" onclick="showAddStudentModal()">
+                            <i class="fas fa-plus me-2"></i>Novo Aluno
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Email</th>
+                                        <th>Telefone</th>
+                                        <th>Nível da Corda</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentsTableBody">
+                                    <!-- Students will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classes Section -->
+            <div id="classesSection" class="section-content" style="display: none;">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-chalkboard-teacher me-2"></i>Gerenciar Turmas</h5>
+                        <button class="btn btn-primary" onclick="showAddClassModal()">
+                            <i class="fas fa-plus me-2"></i>Nova Turma
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Dia da Semana</th>
+                                        <th>Horário</th>
+                                        <th>Instrutor</th>
+                                        <th>Local</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="classesTableBody">
+                                    <!-- Classes will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attendance Section -->
+            <div id="attendanceSection" class="section-content" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-clipboard-check me-2"></i>Controle de Presença</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="attendanceClass" class="form-label">Turma</label>
+                                <select class="form-control" id="attendanceClass" onchange="loadAttendanceForClass()">
+                                    <option value="">Selecione uma turma</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="attendanceDate" class="form-label">Data</label>
+                                <input type="date" class="form-control" id="attendanceDate" onchange="loadAttendanceForClass()">
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button class="btn btn-primary" onclick="saveAttendance()">
+                                    <i class="fas fa-save me-2"></i>Salvar Presença
+                                </button>
+                            </div>
+                        </div>
+                        <div id="attendanceList">
+                            <!-- Attendance list will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reportsSection" class="section-content" style="display: none;">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-user-chart me-2"></i>Relatório Individual</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="reportStudent" class="form-label">Selecionar Aluno</label>
+                                    <select class="form-control" id="reportStudent">
+                                        <option value="">Selecione um aluno</option>
+                                    </select>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="reportStartDate" class="form-label">Data Inicial</label>
+                                        <input type="date" class="form-control" id="reportStartDate">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="reportEndDate" class="form-label">Data Final</label>
+                                        <input type="date" class="form-control" id="reportEndDate">
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary mt-3" onclick="generateStudentReport()">
+                                    <i class="fas fa-chart-bar me-2"></i>Gerar Relatório
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-chart-pie me-2"></i>Estatísticas Gerais</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="statsStartDate" class="form-label">Data Inicial</label>
+                                        <input type="date" class="form-control" id="statsStartDate">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="statsEndDate" class="form-label">Data Final</label>
+                                        <input type="date" class="form-control" id="statsEndDate">
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary mt-3" onclick="generateGeneralStats()">
+                                    <i class="fas fa-chart-line me-2"></i>Gerar Estatísticas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-file-alt me-2"></i>Resultados</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="reportResults">
+                                    <p class="text-muted text-center">Selecione um tipo de relatório acima para visualizar os resultados.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About Section -->
+            <div id="aboutSection" class="section-content" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-info-circle me-2"></i>Sobre o Projeto Eu Sou Ninja</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6>Projeto Social de Capoeira - Arena Jacaraípe</h6>
+                                <p>O projeto "Eu Sou Ninja" é uma iniciativa social que utiliza a capoeira como ferramenta de transformação social, promovendo a inclusão, disciplina e desenvolvimento pessoal de crianças e adolescentes.</p>
+                                
+                                <h6>Objetivos do Sistema</h6>
+                                <ul>
+                                    <li>Controle eficiente de presença dos alunos</li>
+                                    <li>Gestão de turmas e horários</li>
+                                    <li>Acompanhamento do desenvolvimento dos alunos</li>
+                                    <li>Relatórios de frequência e estatísticas</li>
+                                    <li>Cadastro de responsáveis para menores de idade</li>
+                                </ul>
+                                
+                                <h6>Tecnologias Utilizadas</h6>
+                                <ul>
+                                    <li>Backend: Python Flask</li>
+                                    <li>Frontend: HTML5, CSS3, JavaScript, Bootstrap</li>
+                                    <li>Banco de Dados: SQLite/PostgreSQL</li>
+                                    <li>Autenticação: Flask-Login</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-hand-rock fa-3x text-primary mb-3"></i>
+                                        <h6>Capoeira é Arte</h6>
+                                        <p class="small">A capoeira é uma expressão cultural brasileira que combina arte marcial, acrobacia, música e dança.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading position-fixed top-50 start-50 translate-middle">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Student Modal -->
+    <div class="modal fade" id="addStudentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Novo Aluno</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addStudentForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="studentName" class="form-label">Nome *</label>
+                                    <input type="text" class="form-control" id="studentName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="studentBirthDate" class="form-label">Data de Nascimento</label>
+                                    <input type="date" class="form-control" id="studentBirthDate" onchange="checkMinorStatus()">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="studentEmail" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="studentEmail">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="studentPhone" class="form-label">Telefone</label>
+                                    <input type="tel" class="form-control" id="studentPhone">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="studentCordLevel" class="form-label">Nível da Corda</label>
+                                    <select class="form-control" id="studentCordLevel">
+                                        <option value="">Selecione</option>
+                                        <option value="Iniciante">Iniciante</option>
+                                        <option value="Amarela">Amarela</option>
+                                        <option value="Laranja">Laranja</option>
+                                        <option value="Azul">Azul</option>
+                                        <option value="Verde">Verde</option>
+                                        <option value="Roxa">Roxa</option>
+                                        <option value="Marrom">Marrom</option>
+                                        <option value="Vermelha">Vermelha</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="studentAddress" class="form-label">Endereço</label>
+                                    <textarea class="form-control" id="studentAddress" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Guardian Section (for minors) -->
+                        <div id="guardianSection" style="display: none;">
+                            <hr>
+                            <h6><i class="fas fa-user-shield me-2"></i>Dados do Responsável</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="guardianName" class="form-label">Nome do Responsável</label>
+                                        <input type="text" class="form-control" id="guardianName">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="guardianRelationship" class="form-label">Parentesco</label>
+                                        <select class="form-control" id="guardianRelationship">
+                                            <option value="">Selecione</option>
+                                            <option value="Pai">Pai</option>
+                                            <option value="Mãe">Mãe</option>
+                                            <option value="Avô">Avô</option>
+                                            <option value="Avó">Avó</option>
+                                            <option value="Tio">Tio</option>
+                                            <option value="Tia">Tia</option>
+                                            <option value="Outro">Outro</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="guardianPhone" class="form-label">Telefone do Responsável</label>
+                                        <input type="tel" class="form-control" id="guardianPhone">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="guardianEmail" class="form-label">Email do Responsável</label>
+                                        <input type="email" class="form-control" id="guardianEmail">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="addStudent()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Class Modal -->
+    <div class="modal fade" id="addClassModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nova Turma</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addClassForm">
+                        <div class="mb-3">
+                            <label for="className" class="form-label">Nome da Turma *</label>
+                            <input type="text" class="form-control" id="className" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="classDescription" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="classDescription" rows="2"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="classDayOfWeek" class="form-label">Dia da Semana *</label>
+                                    <select class="form-control" id="classDayOfWeek" required>
+                                        <option value="">Selecione</option>
+                                        <option value="0">Segunda-feira</option>
+                                        <option value="1">Terça-feira</option>
+                                        <option value="2">Quarta-feira</option>
+                                        <option value="3">Quinta-feira</option>
+                                        <option value="4">Sexta-feira</option>
+                                        <option value="5">Sábado</option>
+                                        <option value="6">Domingo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="classMaxStudents" class="form-label">Máximo de Alunos</label>
+                                    <input type="number" class="form-control" id="classMaxStudents" min="1">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="classStartTime" class="form-label">Horário de Início *</label>
+                                    <input type="time" class="form-control" id="classStartTime" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="classEndTime" class="form-label">Horário de Fim *</label>
+                                    <input type="time" class="form-control" id="classEndTime" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="classInstructor" class="form-label">Instrutor</label>
+                                    <input type="text" class="form-control" id="classInstructor">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="classLocation" class="form-label">Local</label>
+                                    <input type="text" class="form-control" id="classLocation">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="addClass()">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
